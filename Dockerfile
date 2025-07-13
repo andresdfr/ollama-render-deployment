@@ -1,24 +1,24 @@
-# Dockerfile
+# Optimized Dockerfile for free tier
 FROM ollama/ollama:latest
 
-# Set environment variables
+# Install curl for health checks
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Set conservative environment variables
 ENV OLLAMA_HOST=0.0.0.0:11434
 ENV OLLAMA_ORIGINS=*
 ENV OLLAMA_MODELS=/app/models
+ENV OLLAMA_NUM_PARALLEL=1
+ENV OLLAMA_MAX_LOADED_MODELS=1
+ENV OLLAMA_FLASH_ATTENTION=0
 
-# Create models directory
-RUN mkdir -p /app/models
-
-# Copy startup script
-COPY start.sh /app/start.sh
+# Create optimized startup script
+COPY start_optimized.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
-# Expose port
 EXPOSE 11434
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+HEALTHCHECK --interval=60s --timeout=30s --start-period=300s --retries=3 \
   CMD curl -f http://localhost:11434/api/tags || exit 1
 
-# Start the service
 CMD ["/app/start.sh"]
