@@ -1,0 +1,38 @@
+# render.yaml
+services:
+  - type: web
+    name: ollama-api
+    env: docker
+    dockerfilePath: ./Dockerfile
+    plan: free  # or starter, standard, pro
+    
+    # Resource allocation
+    disk:
+      name: ollama-models
+      mountPath: /app/models
+      sizeGB: 10  # Adjust based on model size
+    
+    # Environment variables
+    envVars:
+      - key: OLLAMA_HOST
+        value: "0.0.0.0:11434"
+      - key: OLLAMA_ORIGINS
+        value: "*"
+      - key: OLLAMA_MODELS
+        value: "/app/models"
+      - key: OLLAMA_NUM_PARALLEL
+        value: "2"
+      - key: OLLAMA_MAX_LOADED_MODELS
+        value: "1"
+    
+    # Health check configuration
+    healthCheckPath: "/api/tags"
+    
+    # Auto-deploy settings
+    autoDeploy: true
+    
+    # Build command (optional)
+    buildCommand: "echo 'Building Ollama service'"
+    
+    # Start command override (optional)
+    startCommand: "/app/start.sh"
