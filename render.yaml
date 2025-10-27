@@ -1,21 +1,20 @@
-# render.yaml
 services:
   - type: web
     name: ollama-api
     env: docker
     dockerfilePath: ./Dockerfile
-    plan: free  # or starter, standard, pro
-    
-    # Resource allocation
+    plan: free
+
+    # Disco para modelos
     disk:
       name: ollama-models
       mountPath: /app/models
-      sizeGB: 10  # Adjust based on model size
-    
-    # Environment variables
+      sizeGB: 10
+
+    # Variables de entorno
     envVars:
       - key: OLLAMA_HOST
-        value: "0.0.0.0:11434"
+        value: "0.0.0.0"
       - key: OLLAMA_ORIGINS
         value: "*"
       - key: OLLAMA_MODELS
@@ -24,15 +23,15 @@ services:
         value: "2"
       - key: OLLAMA_MAX_LOADED_MODELS
         value: "1"
-    
-    # Health check configuration
+
+    # Health check
     healthCheckPath: "/api/tags"
-    
-    # Auto-deploy settings
+
+    # Auto-deploy
     autoDeploy: true
-    
-    # Build command (optional)
+
+    # Build command opcional
     buildCommand: "echo 'Building Ollama service'"
-    
-    # Start command override (optional)
-    startCommand: "/app/start.sh"
+
+    # IMPORTANTE: QUITAMOS el startCommand que causaba el error
+    # Render usará el CMD del Dockerfile (que debe ejecutar /app/start.sh)
