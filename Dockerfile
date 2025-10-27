@@ -31,4 +31,3 @@ HEALTHCHECK --interval=60s --timeout=30s --start-period=300s --retries=3 \
 # - CMD ejecuta nuestro script (que debe arrancar 'ollama serve' y hacer el pull del modelo)
 ENTRYPOINT ["/bin/sh", "-c"]
 CMD ["/app/start.sh"]
-``
