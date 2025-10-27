@@ -1,24 +1,45 @@
-# start_optimized.sh
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-echo "Starting Ollama service..."
+MODEL="${MODEL:-llama3:8b}"   # Cambia si quieres, o define $MODEL como env var
+API="http://localhost:11434"
+
+echo "[start] Starting Ollama service..."
 ollama serve &
 
-# Wait longer for startup on free tier
-echo "Waiting for Ollama to initialize..."
-sleep 30
+# Espera activa a que la API suba (máx ~60s)
+echo "[start] Waiting for Ollama API..."
+for i in $(seq 1 60); do
+  if curl -sf "${API}/api/tags" >/dev/null 2>&1; then
+    echo "[start] Ollama API is up."
+    break
+  fi
+  sleep 1
+  if [[ $i -eq 60 ]]; then
+    echo "[start] ERROR: Ollama API did not start in time." >&2
+    exit 1
+  fi
+done
 
-# Check if model exists before pulling
-if ollama list | grep -q "GandalfBaum/deepseek_r1-claude3.7"; then
-    echo "Model already exists, skipping download"
+# Verifica si el modelo ya está presente
+if ollama list | awk '{print $1}' | grep -qx "${MODEL}"; then
+  echo "[start] Model '${MODEL}' already present. Skipping pull."
 else
-    echo "Downloading model (this may take a while on first run)..."
-    ollama pull GandalfBaum/deepseek_r1-claude3.7
+  echo "[start] Pulling model '${MODEL}' (first time may take a while)..."
+  # usa la API para que Render vea salida y no timeoutee
+  curl -sS -X POST "${API}/api/pull" \
+    -H "Content-Type: application/json" \
+    -d "{\"name\":\"${MODEL}\"}"
 fi
 
-# Preload the model
-echo "Preloading model..."
-ollama run GandalfBaum/deepseek_r1-claude3.7 "Hello" --verbose=false
+# Warm-up: una generación corta, no streaming
+echo "[start] Warming up model '${MODEL}'..."
+curl -sS -X POST "${API}/api/generate" \
+  -H "Content-Type: application/json" \
+  -d "{\"model\":\"${MODEL}\",\"prompt\":\"hello\",\"stream\":false}" \
+  >/dev/null || true
 
-echo "Ollama is ready!"
-wait
+echo "[start] ✅ Ollama is ready with model '${MODEL}'."
+# Mantén el contenedor vivo
+tail -f /dev/null
+``
